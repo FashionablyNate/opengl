@@ -62,13 +62,19 @@ int main() {
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
 
-	/* VERTEX BUFFER OBJECT */
+	/* VERTEX & ELEMENT BUFFER OBJECT */
 	// vertex data that defines 3d coordinates of three points
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		 0.5f, -0.5f, 0.0f,
-		 0.0f,  0.5f, 0.0f
+		 0.5f,  0.5f, 0.0f, // top right
+		 0.5f, -0.5f, 0.0f, // bottom right
+		-0.5f, -0.5f, 0.0f, // bottom left
+		-0.5,   0.5f, 0.0f  // top left
 	};
+	unsigned int indices[] = {
+		0, 1, 3, // first triangle
+		1, 2, 3  // second triangle
+	};
+
 	// create variable to store unique buffer ID
 	unsigned int VBO;
 	// generate buffer ID for our Vertex Buffer Object (VBO)
@@ -82,6 +88,11 @@ int main() {
 	// GL_STATIC_DRAW specifies that we're going to write the data once,
 	// and it'll be used many times.
 	
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 	/* VERTEX SHADER */
 	// variable to store ID of shader object
 	unsigned int vertexShader;
@@ -151,7 +162,8 @@ int main() {
 
 		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 		/* RENDERING COMMANDS END */
 
 		// swaps the color buffer, and shows it as output to the screen
