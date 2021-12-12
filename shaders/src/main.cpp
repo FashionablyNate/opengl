@@ -1,8 +1,8 @@
 #include <iostream>
-#include "glad.h"
+#include "../include/glad.h"
 #include <GLFW/glfw3.h>
 #include <math.h>
-#include "shader_s.h"
+#include "../include/shader_s.h"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
