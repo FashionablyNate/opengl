@@ -1,8 +1,11 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include <iostream>
 #include "../include/glad.h"
 #include <GLFW/glfw3.h>
 #include <math.h>
 #include "../include/shader_s.h"
+#include "../include/stb_image.h"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -70,6 +73,12 @@ int main() {
 					1.0f, 0.0f, // lower right corner
 					0.5f, 1.0f // top center corner
 	};
+	
+	// texture generation
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
 	// specifies how textures should handle coordinates outside their range
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
@@ -80,7 +89,26 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	// we don't specify a magnification filtering setting because mipmaps don't magnify textures
 	// and opengl would throw an error code
+	int width, height, nrChannels;
+	unsigned char * data = stbi_load("../img/container.jpg", &width, &height, &nrChannels, 0);
 
+	if (data) {
+		// arg1, specifies texture target, in this case the currently bound 2D texure
+		// arg2, specifies mipmap level we want to target
+		// arg3, tells opengl in what format we want to store the texture
+		// arg4 and arg5, set the width and height of the texture
+		// arg6, must always be set to 0 (legacy stuff so I'm told)
+		// arg7 and arg8, specify the format and datatype of the source image
+		// ar9, actual image data
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	} else {
+		std::cout << "Failed ot load texture" << std::endl;
+	}
+
+	// free memory
+	stbi_image_free(data);
+	
 	// create variable to store unique buffer ID
 	unsigned int VBO;
 	// generate buffer ID for our Vertex Buffer Object (VBO)
