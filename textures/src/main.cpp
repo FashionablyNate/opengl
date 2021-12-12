@@ -1,8 +1,8 @@
 #include <iostream>
-#include "glad.h"
+#include "../include/glad.h"
 #include <GLFW/glfw3.h>
 #include <math.h>
-#include "shader_s.h"
+#include "../include/shader_s.h"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -63,12 +63,23 @@ int main() {
 		-0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
 		 0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // top
 	};
-	/*
-	unsigned int indices[] = {
-		0, 1, 3, // first triangle
-		1, 2, 3  // second triangle
+
+	// texture coordinates which defines where the textures should go
+	float texCoords[] = {
+					0.0f, 0.0f, // lower left corner
+					1.0f, 0.0f, // lower right corner
+					0.5f, 1.0f // top center corner
 	};
-	*/
+	// specifies how textures should handle coordinates outside their range
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	// specifies how texture filtering should work
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// specifies how texture filtering should work for mipmaps
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	// we don't specify a magnification filtering setting because mipmaps don't magnify textures
+	// and opengl would throw an error code
 
 	// create variable to store unique buffer ID
 	unsigned int VBO;
