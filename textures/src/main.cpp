@@ -54,43 +54,60 @@ int main() {
 	// build and compile shader program
 	Shader ourShader("src/shader.vs", "src/shader.fs");
 	
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-
 	/* VERTEX & ELEMENT BUFFER OBJECT */
 	// vertex data that defines 3d coordinates of three points
 	float vertices[] = {
-		 // Position        // Color
-		 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom right
-		-0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
-		 0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // top
+		 // Position         // Color           // texture coords
+		 0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f, // top right
+		 0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // bottom right
+		-0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, // bottom left
+		-0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f  // top left
 	};
 
-	// texture coordinates which defines where the textures should go
-	float texCoords[] = {
-					0.0f, 0.0f, // lower left corner
-					1.0f, 0.0f, // lower right corner
-					0.5f, 1.0f // top center corner
+	// define indices of triangles that make up the rectangle
+	float indices[] = {
+		0, 1, 3,
+		1, 2, 3
 	};
+
+	// create variables to store unique buffer IDs
+	// generate buffer IDs
+	unsigned int VBO, VAO, EBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) 0);
+	glEnableVertexAttribArray(0);
+	// color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// texture coord attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *) (6 * sizeof(float)));
+ 	glEnableVertexAttribArray(2);
 	
 	// texture generation
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
+	unsigned int texture1, texture2;
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
 	// specifies how textures should handle coordinates outside their range
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	// specifies how texture filtering should work
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// specifies how texture filtering should work for mipmaps
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	// we don't specify a magnification filtering setting because mipmaps don't magnify textures
-	// and opengl would throw an error code
+	
 	int width, height, nrChannels;
-	unsigned char * data = stbi_load("../img/container.jpg", &width, &height, &nrChannels, 0);
+	unsigned char * data = stbi_load("img/container.jpg", &width, &height, &nrChannels, 0);
 
 	if (data) {
 		// arg1, specifies texture target, in this case the currently bound 2D texure
@@ -103,29 +120,35 @@ int main() {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	} else {
-		std::cout << "Failed ot load texture" << std::endl;
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+
+	// specifies how textures should handle coordinates outside their range
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// specifies how texture filtering should work
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+	data = stbi_load("img/awesomeface.png", &width, &height, &nrChannels, 0);
+
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	} else {
+		std::cout << "Failed to load texture" << std::endl;
 	}
 
 	// free memory
 	stbi_image_free(data);
 	
-	// create variable to store unique buffer ID
-	unsigned int VBO;
-	// generate buffer ID for our Vertex Buffer Object (VBO)
-	glGenBuffers(1, &VBO);
-	// bind the new buffer to GL_ARRAY_BUFFER which corresponds to the type of VBO
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	// from now on buffer calls made on GL_ARRAY_BUFFER configure VBO because it's
-	// the currently bound buffer.
-	// Now we can copy our vertex data into the buffer's memory.
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	// GL_STATIC_DRAW specifies that we're going to write the data once,
-	// and it'll be used many times.
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	ourShader.use();
+	ourShader.setInt("texture1", 1);
+	ourShader.setInt("texture2", 1);
 
 	/* RENDER LOOP START */
 	while (!glfwWindowShouldClose(window)) {
@@ -136,10 +159,15 @@ int main() {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // fill color buffer with greenish blue
 		glClear(GL_COLOR_BUFFER_BIT); // clear color buffer
 
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2);
+		
 		ourShader.use();
-
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		//glBindVertexArray(0);
 		/* RENDERING COMMANDS END */
 
@@ -152,6 +180,7 @@ int main() {
 
 	glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 
 	glfwTerminate(); // free resources
 	return 0;
