@@ -1,3 +1,4 @@
+#include <glm/geometric.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -14,12 +15,14 @@
 
 #include <iostream>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
+void framebuffer_size_callback(GLFWwindow * window, int width, int height);
+void processInput(GLFWwindow * window);
+void mouseCallback(GLFWwindow * window, double xpos, double ypos);
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 glm::vec3 cameraPos     = glm::vec3(0.0f, 0.0f,  3.0f);
 glm::vec3 cameraFront   = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -28,6 +31,10 @@ glm::vec3 cameraUp      = glm::vec3(0.0f, 1.0f,  0.0f);
 float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame  = 0.0f; // time of last frame
 
+float lastX = 960, lastY = 540;
+float yaw, pitch, fov = 45.0f;
+
+bool firstMouse = true;
 
 int main() {
     // glfw: initialize and configure
@@ -49,6 +56,8 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouseCallback);
+    glfwSetScrollCallback(window, scrollCallback);
 
     // glad: load all OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -189,7 +198,7 @@ int main() {
     // or set it via the texture class
     ourShader.setInt("texture2", 1);
 
-		glm::mat4 trans = glm::mat4(1.0f);
+	glm::mat4 trans = glm::mat4(1.0f);
 
     // orthographic projection matrix, which defines the clipping space
     glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
@@ -212,11 +221,21 @@ int main() {
   		               glm::vec3(0.0f, 0.0f, 0.0f), 
   		               glm::vec3(0.0f, 1.0f, 0.0f));
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    yaw = -90.0f;
+    glm::vec3 direction;
 
     /* RENDER LOOP */
     while (!glfwWindowShouldClose(window)) {
         // input
         processInput(window);
+
+        direction.x = cos(glm::radians(yaw) * cos(glm::radians(pitch)));
+        direction.y = sin(glm::radians(pitch));
+        direction.z = sin(glm::radians(yaw) * cos(glm::radians(pitch)));
+        cameraFront = glm::normalize(direction);
+        projection = glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f);
 
         // render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -301,4 +320,35 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+}
+
+void mouseCallback(GLFWwindow * window, double xpos, double ypos) {
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+    lastX = xpos;
+    lastY = ypos;
+
+    const float sensitivity = 0.07f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw += xoffset;
+    pitch += yoffset;
+
+    if (pitch > 89.0f) pitch = 89.0f;
+    if (pitch < -89.0f) pitch = -89.0f;
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    fov -= (float)yoffset;
+    if (fov < 1.0f)
+        fov = 1.0f;
+    if (fov > 45.0f)
+        fov = 45.0f; 
 }
