@@ -183,21 +183,27 @@ int main() {
 
 		glm::mat4 trans = glm::mat4(1.0f);
 
-		// orthographic projection matrix, which defines the clipping space
-		glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
+    // orthographic projection matrix, which defines the clipping space
+    glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
 
-		// arg1, sets FOV
-		// arg2, aspect ratio
-		// arg3, near plane of frustum
-		// arg4, far plane of frustum
-		glm::mat4 projection = glm::perspective((float)(M_PI / 4), (float)width / (float)height, 0.1f, 100.0f);
+    // arg1, sets FOV
+    // arg2, aspect ratio
+    // arg3, near plane of frustum
+    // arg4, far plane of frustum
+    glm::mat4 projection = glm::perspective((float)(M_PI / 4), (float)width / (float)height, 0.1f, 100.0f);
 
-		glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 model = glm::mat4(1.0f);
 
-		glm::mat4 view = glm::mat4(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    //glm::mat4 view = glm::mat4(1.0f);
+    //view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
-		glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+
+    glm::vec3 cameraPos     = glm::vec3(0.0f, 0.0f,  3.0f);
+    glm::vec3 cameraFront   = glm::vec3(0.0f, 0.0f, -1.0f);
+    glm::vec3 cameraUp      = glm::vec3(0.0f, 1.0f,  0.0f);
+
+    glm::mat4 view;
 
     /* RENDER LOOP */
     while (!glfwWindowShouldClose(window)) {
@@ -213,21 +219,23 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
-				
-				//float timeValue = glfwGetTime();
-				//trans = glm::rotate(trans, (float) (M_PI / 600), glm::vec3(1.0, 0.0, 0.0));
-				//trans = glm::scale(trans, glm::vec3((sin(timeValue) / 400) + 1, (sin(timeValue) / 400) + 1, 1.0));
+        
+        //float timeValue = glfwGetTime();
+        //trans = glm::rotate(trans, (float) (M_PI / 600), glm::vec3(1.0, 0.0, 0.0));
+        //trans = glm::scale(trans, glm::vec3((sin(timeValue) / 400) + 1, (sin(timeValue) / 400) + 1, 1.0));
 
-				model = glm::rotate(model, (float) (M_PI / 600), glm::vec3(0.5f, 1.0f, 0.0f));
-				int modelLoc = glGetUniformLocation(ourShader.ID, "model");
-				glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-				int viewLoc = glGetUniformLocation(ourShader.ID, "view");
-				glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-				int projLoc = glGetUniformLocation(ourShader.ID, "projection");
-				glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        model = glm::rotate(model, (float) (M_PI / 600), glm::vec3(0.5f, 1.0f, 0.0f));
+        int modelLoc = glGetUniformLocation(ourShader.ID, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        int viewLoc = glGetUniformLocation(ourShader.ID, "view");
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        int projLoc = glGetUniformLocation(ourShader.ID, "projection");
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-				unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-				glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
+        view = glm::lookAt(glm::vec3(cameraPos, cameraPos + cameraFront, cameraUp);
 
         // render container
         ourShader.use();
@@ -258,8 +266,24 @@ int main() {
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    const float cameraSpeed = 0.0f;
+    switch (GLFW_PRESS) {
+        case glfwGetKey(window, GLFW_KEY_ESCAPE) :
+            glfwSetWindowShouldClose(window, true);
+            break;
+        case glfwGetKey(window, GLFW_KEY_W) :
+            cameraPos += cameraSpeed * cameraFront;
+            break;
+        case glfwGetKey(window, GLFW_KEY_S) :
+            cameraPos -= cameraSpeed * cameraFront;
+            break;
+        case glfwGetKey(window, GLFW_KEY_A) :
+            cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+            break;
+        case glfwGetKey(window, GLFW_KEY_D) :
+            cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+            break;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
